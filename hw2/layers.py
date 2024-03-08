@@ -82,7 +82,7 @@ class LeakyReLU(Layer):
 
         # TODO: Implement the LeakyReLU operation.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        out = torch.max(self.alpha * x, x)
         # ========================
 
         self.grad_cache["x"] = x
@@ -97,7 +97,7 @@ class LeakyReLU(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        dx = torch.where(x > 0, dout, self.alpha * dout)
         # ========================
 
         return dx
@@ -116,7 +116,7 @@ class ReLU(LeakyReLU):
 
     def __init__(self):
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        super().__init__(alpha=0)
         # ========================
 
     def __repr__(self):
@@ -142,7 +142,8 @@ class Sigmoid(Layer):
         # TODO: Implement the Sigmoid function.
         #  Save whatever you need into grad_cache.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        out = 1 / (1 + torch.exp(-x))
+        self.grad_cache["out"] = out
         # ========================
 
         return out
@@ -155,7 +156,8 @@ class Sigmoid(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        out = self.grad_cache["out"]
+        dx = out * (1 - out) * dout
         # ========================
 
         return dx
@@ -183,7 +185,8 @@ class TanH(Layer):
         # TODO: Implement the tanh function.
         #  Save whatever you need into grad_cache.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        out = torch.tanh(x)
+        self.grad_cache["out"] = out
         # ========================
 
         return out
@@ -196,7 +199,8 @@ class TanH(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        out = self.grad_cache["out"]
+        dx = (1 - out ** 2) * dout
         # ========================
 
         return dx
@@ -454,7 +458,7 @@ class MLP(Layer):
         :param in_features: Number of features of the input of the first layer.
         :param num_classes: Number of features of the output of the last layer.
         :param hidden_features: A sequence of hidden layer dimensions.
-        :param activation: Either 'relu' or 'sigmoid', specifying which 
+        :param activation: Either 'relu' or 'sigmoid', specifying which
         activation function to use between linear layers.
         :param: Dropout probability. Zero means no dropout.
         """
