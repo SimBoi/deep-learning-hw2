@@ -18,5 +18,5 @@
 
 unset XDG_RUNTIME_DIR
 
-xvfb-run -a -s "-screen 0 1440x900x24" jupyter lab --no-browser --ip=$(hostname -I) --port-retries=100
+xvfb-run -a -s "-screen 0 1440x900x24" jupyter lab --no-browser --ip=$(hostname -I) --port-retries=100 --ServerApp.iopub_msg_rate_limit=1.0e10 
 

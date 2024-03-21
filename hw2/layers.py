@@ -82,7 +82,7 @@ class LeakyReLU(Layer):
 
         # TODO: Implement the LeakyReLU operation.
         # ====== YOUR CODE: ======
-        out = torch.max(self.alpha * x, x)
+        out = torch.max(x, self.alpha * x.clone().detach())
         # ========================
 
         self.grad_cache["x"] = x
@@ -97,7 +97,7 @@ class LeakyReLU(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        dx = torch.where(x > 0, dout, self.alpha * dout)
+        dx = dout * (x > 0).detach().clone()
         # ========================
 
         return dx
@@ -116,7 +116,7 @@ class ReLU(LeakyReLU):
 
     def __init__(self):
         # ====== YOUR CODE: ======
-        super().__init__(alpha=0)
+        super().__init__(0)
         # ========================
 
     def __repr__(self):
@@ -142,8 +142,8 @@ class Sigmoid(Layer):
         # TODO: Implement the Sigmoid function.
         #  Save whatever you need into grad_cache.
         # ====== YOUR CODE: ======
-        out = 1 / (1 + torch.exp(-x))
-        self.grad_cache["out"] = out
+        out = 1/(1 + torch.exp(-x))
+        self.grad_cache['out'] = out
         # ========================
 
         return out
@@ -156,8 +156,8 @@ class Sigmoid(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        out = self.grad_cache["out"]
-        dx = out * (1 - out) * dout
+        out = self.grad_cache['out']
+        dx = dout * (out * (1 - out))
         # ========================
 
         return dx
@@ -186,7 +186,7 @@ class TanH(Layer):
         #  Save whatever you need into grad_cache.
         # ====== YOUR CODE: ======
         out = torch.tanh(x)
-        self.grad_cache["out"] = out
+        self.grad_cache['out'] = out
         # ========================
 
         return out
@@ -199,8 +199,8 @@ class TanH(Layer):
 
         # TODO: Implement gradient w.r.t. the input x
         # ====== YOUR CODE: ======
-        out = self.grad_cache["out"]
-        dx = (1 - out ** 2) * dout
+        out = self.grad_cache['out']
+        dx = dout * (1 - out**2)
         # ========================
 
         return dx
@@ -228,7 +228,8 @@ class Linear(Layer):
         # Initialize the weights to zero-mean gaussian noise with a standard
         # deviation of `wstd`. Init bias to zero.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        self.w = torch.normal(torch.zeros(out_features, in_features), wstd)
+        self.b = torch.normal(torch.zeros(out_features), wstd)
         # ========================
 
         # These will store the gradients
@@ -248,7 +249,8 @@ class Linear(Layer):
 
         # TODO: Compute the affine transform
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        x = x.reshape((x.shape[0], -1))
+        out = torch.matmul(x, torch.t(self.w)) + self.b
         # ========================
 
         self.grad_cache["x"] = x
@@ -267,7 +269,9 @@ class Linear(Layer):
         #   - db, the gradient of the loss with respect to b
         #  Note: You should ACCUMULATE gradients in dw and db.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        dx = torch.mm(dout, self.w)
+        self.dw += torch.mm(dout.t(), x)
+        self.db += torch.sum(dout, dim=0)
         # ========================
 
         return dx
@@ -308,7 +312,10 @@ class CrossEntropyLoss(Layer):
         # TODO: Compute the cross entropy loss using the last formula from the
         #  notebook (i.e. directly using the class scores).
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        exps = torch.exp(x)
+        y_hat = exps / torch.sum(exps, dim=1).reshape(N, -1)
+        log_likelihood = -torch.log(y_hat[range(N), y])
+        loss = torch.sum(log_likelihood) / N
         # ========================
 
         self.grad_cache["x"] = x
@@ -327,7 +334,10 @@ class CrossEntropyLoss(Layer):
 
         # TODO: Calculate the gradient w.r.t. the input x.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        exps = torch.exp(x)
+        y_hat = exps / torch.sum(exps, dim=1).reshape(N, -1)
+        y_hat[range(N), y] -= 1
+        dx = y_hat / N
         # ========================
 
         return dx
@@ -351,7 +361,12 @@ class Dropout(Layer):
         #  Notice that contrary to previous layers, this layer behaves
         #  differently a according to the current training_mode (train/test).
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        if self.training_mode is True:
+            activated_nureons = torch.distributions.bernoulli.Bernoulli(1. - self.p).sample(x.shape)
+            self.grad_cache['activated_nureons'] = activated_nureons
+            out = torch.mul(x, activated_nureons)
+        else:
+            out = x
         # ========================
 
         return out
@@ -359,7 +374,11 @@ class Dropout(Layer):
     def backward(self, dout):
         # TODO: Implement the dropout backward pass.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        if self.training_mode is True:
+            activated_nureons = self.grad_cache['activated_nureons']
+            dx = torch.mul(dout, activated_nureons)
+        else:
+            dx = dout
         # ========================
 
         return dx
@@ -386,7 +405,9 @@ class Sequential(Layer):
         # TODO: Implement the forward pass by passing each layer's output
         #  as the input of the next.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        out = x
+        for layer in self.layers:
+            out = layer.forward(out, **kw)
         # ========================
 
         return out
@@ -398,7 +419,9 @@ class Sequential(Layer):
         #  Each layer's input gradient should be the previous layer's output
         #  gradient. Behold the backpropagation algorithm in action!
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        din = dout
+        for layer in reversed(self.layers):
+            din = layer.backward(din)
         # ========================
 
         return din
@@ -408,7 +431,8 @@ class Sequential(Layer):
 
         # TODO: Return the parameter tuples from all layers.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        for layer in self.layers:
+            params += layer.params()
         # ========================
 
         return params
@@ -458,7 +482,7 @@ class MLP(Layer):
         :param in_features: Number of features of the input of the first layer.
         :param num_classes: Number of features of the output of the last layer.
         :param hidden_features: A sequence of hidden layer dimensions.
-        :param activation: Either 'relu' or 'sigmoid', specifying which
+        :param activation: Either 'relu' or 'sigmoid', specifying which 
         activation function to use between linear layers.
         :param: Dropout probability. Zero means no dropout.
         """
@@ -466,7 +490,21 @@ class MLP(Layer):
 
         # TODO: Build the MLP architecture as described.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        for i in range(len(hidden_features) + 1) :
+            if i == 0:
+                layers += [Linear(in_features, hidden_features[0], **kw)]
+            elif i == (len(hidden_features)):
+                layers += [Linear(hidden_features[i - 1], num_classes, **kw)]
+                continue
+            else:
+                layers += [Linear(hidden_features[i - 1], hidden_features[i], **kw)]
+
+            if activation == 'relu':
+                layers += [ReLU()]
+                if dropout > 0:
+                    layers +=[Dropout(dropout)]
+            else:
+                layers +=[Sigmoid()]
         # ========================
 
         self.sequence = Sequential(*layers)
