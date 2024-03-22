@@ -265,52 +265,29 @@ $$(256 \times 1 \times 1) \times 64 + (64 \times 3 \times 3) \times 64 + (64 \ti
 part5_q1 = r"""
 **Your answer:**
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+1. The network with a depth of 2 (l2) achieved the highest accuracies, followed by the network with a depth of 4 (l4). This is likely because as the network depth increases, the dimensions shrink due to pooling, leading to a gradient that approaches zero and halts training.
+2. The networks with depths of 8 and 16 (l=8,16) were not trainable due to the vanishing gradient problem. To mitigate this, we could introduce more skip connections and batch normalization layers.
 
 """
 
 part5_q2 = r"""
 **Your answer:**
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+The network learned well even with a low value of `l`. The results suggest that increasing the number of filters can improve learning.
 
 """
 
 part5_q3 = r"""
 **Your answer:**
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+Mixing the number of filters didn't significantly improve the results compared to experiment 1.1. Increasing `l` led to a larger number of layers, causing the dimensions to vanish due to pooling, and networks with depths of 3 and 4 (l3/4) didn't learn.
 
 """
 
 part5_q4 = r"""
 **Your answer:**
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+The depth of the network had less impact on learning. Skip connections helped networks with large depths (like l=16,32) to learn, which was not the case in previous experiments due to the vanishing gradient problem. This suggests that skip connections can help to alleviate the vanishing gradient problem.
 
 """
 

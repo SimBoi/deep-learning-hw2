@@ -100,24 +100,15 @@ class Trainer(abc.ABC):
             #    method on this class to save the model to the file specified by
             #    the checkpoints argument.
             # ====== YOUR CODE: ======
-            def update_training_status(best_acc, last_loss, epochs_without_improvement, early_stopping, checkpoints):
-                if best_acc is not None and last_loss - best_acc >= 0:
-                    epochs_without_improvement += 1
-                else:
-                    epochs_without_improvement = 0
-                    if best_acc is None or last_loss < best_acc:
-                        best_acc = last_loss
-                        if checkpoints is not None:
-                            torch.save(self.model, f"{checkpoints}.cp")
-    
-                if early_stopping is not None and epochs_without_improvement >= early_stopping:
-                    return best_acc, epochs_without_improvement, True  
-    
-                return best_acc, epochs_without_improvement, False 
-
-
-            best_acc, epochs_without_improvement, should_stop = update_training_status(best_acc, last_loss, epochs_without_improvement, early_stopping, checkpoints)
-            if should_stop:
+            if best_acc is not None and last_loss - best_acc >= 0:
+                epochs_without_improvement += 1
+            else:
+                epochs_without_improvement = 0
+            if best_acc is None or last_loss < best_acc:
+                best_acc = last_loss
+                if checkpoints is not None:
+                    torch.save(self.model, checkpoints + ".cp")
+            if early_stopping is not None and epochs_without_improvement >= early_stopping:
                 break
             # ========================
 

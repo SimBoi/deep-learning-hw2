@@ -1,0 +1,90 @@
+{
+  "config": {
+    "run_name": "exp1_3",
+    "out_dir": "./results",
+    "seed": 42,
+    "device": null,
+    "bs_train": 50,
+    "bs_test": 12,
+    "batches": 10,
+    "epochs": 10,
+    "early_stopping": 5,
+    "checkpoints": null,
+    "lr": 0.001,
+    "reg": 0.001,
+    "filters_per_layer": [
+      64
+    ],
+    "layers_per_block": 2,
+    "pool_every": 4,
+    "hidden_dims": [
+      100
+    ],
+    "model_type": "resnet",
+    "activation_type": "relu",
+    "activation_params": {},
+    "pooling_type": "max",
+    "pooling_params": {
+      "kernel_size": 2
+    },
+    "batchnorm": true,
+    "dropout": 0.163,
+    "bottleneck": false,
+    "loss_fn": "cross entropy",
+    "optimizer": "Adam",
+    "hp_optim": {
+      "betas": [
+        0.996,
+        0.983
+      ]
+    },
+    "subset": false
+  },
+  "results": {
+    "num_epochs": 9,
+    "train_loss": [
+      1.7684384430646896,
+      1.3721909143924713,
+      1.150303179562092,
+      1.020341741681099,
+      0.9156168439984321,
+      0.8882640496790409,
+      0.845994053453207,
+      0.7870779440701008,
+      0.779017200410366
+    ],
+    "train_acc": [
+      37.742,
+      51.298,
+      59.232,
+      63.93,
+      67.624,
+      68.454,
+      70.066,
+      71.96,
+      72.528
+    ],
+    "test_loss": [
+      1.4443873167037964,
+      1.2536966800689697,
+      1.1709402799606323,
+      1.1616536378860474,
+      1.2150776386260986,
+      1.2291815280914307,
+      1.2655874490737915,
+      1.3214246034622192,
+      1.311700463294983
+    ],
+    "test_acc": [
+      48.25,
+      55.11,
+      59.38,
+      60.28,
+      59.51,
+      59.25,
+      58.45,
+      57.86,
+      58.58
+    ]
+  }
+}

@@ -91,6 +91,7 @@ class CNN(nn.Module):
         seq = nn.Sequential(*layers)
         return seq
 
+    
     def _n_features(self) -> int:
         """
         Calculates the number of extracted features going into the the classifier part.
@@ -101,9 +102,10 @@ class CNN(nn.Module):
         try:
             # ====== YOUR CODE: ======
             dummy_input = torch.randn(1, *self.in_size)
-            output = self.feature_extractor(dummy_input)
-            n_features = output.numel() // output.shape[0]  
-            return n_features 
+            with torch.no_grad():
+                output = self.feature_extractor(dummy_input)
+            num_features = output.numel() / output.shape[0]
+            return int(num_features)
             # ========================
         finally:
             torch.set_rng_state(rng_state)
@@ -132,12 +134,12 @@ class CNN(nn.Module):
         #  return class scores.
         out: Tensor = None
         # ====== YOUR CODE: ======
-        x = self.feature_extractor(x)
-        x = x.view(x.shape[0], -1)
-        out = self.mlp(x)
+        features = self.feature_extractor(x)
+        features_flattened = features.view(features.size(0), -1) 
+        out = self.mlp(features_flattened) 
         # ========================
         return out
-
+        
 
 class ResidualBlock(nn.Module):
     """
@@ -194,25 +196,28 @@ class ResidualBlock(nn.Module):
         #  - Don't create layers which you don't use! This will prevent
         #    correct comparison in the test.
         # ====== YOUR CODE: ======
-        layers = []
-        in_ch = in_channels
-        for i, (out_channel, kernel_size) in enumerate(zip(channels, kernel_sizes)):
-            layers += [nn.Conv2d(in_ch, out_channel, kernel_size, padding=((kernel_size - 1)//2))]
-            if i == (len(kernel_sizes) - 1):
-                break
-            if batchnorm is True:
-                layers += [nn.BatchNorm2d(out_channel)]
-            if dropout != 0.:
-                layers += [nn.Dropout(dropout)]
-            layers += [nn.ReLU()]
-            in_ch = out_channel
+        saved_in_channels = in_channels
+        dropout_block = [nn.Dropout2d(dropout)] if dropout > 0 else []
+        main_layers = []
+        for kernel_size, out_channels in zip(kernel_sizes[:-1], channels[:-1]):
+            padding = (kernel_size - 1) // 2
+            main_layers += [nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding, stride=1)]
+            main_layers += dropout_block
+            main_layers += [nn.BatchNorm2d(out_channels)] if batchnorm else []
+            main_layers += [ACTIVATIONS[activation_type](**activation_params)]
+            in_channels = out_channels
 
-        self.main_path = nn.Sequential(*layers)
+        kernel_size = kernel_sizes[-1]
+        padding = (kernel_size - 1) // 2
+        main_layers += [nn.Conv2d(in_channels, channels[-1], kernel_size, padding=padding, stride=1)]
 
-        if in_channels != channels[-1]:
-            self.shortcut_path = nn.Sequential(nn.Conv2d(in_channels, channels[-1], 1, bias=False))
-        else:
-            self.shortcut_path = nn.Sequential()
+        self.main_path = nn.Sequential(*main_layers)
+
+        shortcut_layers = []
+        if saved_in_channels != channels[-1]:
+            shortcut_layers += [nn.Conv2d(saved_in_channels, channels[-1], kernel_size=1, bias=False)]
+
+        self.shortcut_path = nn.Sequential(*shortcut_layers)
         # ========================
 
     def forward(self, x: Tensor):
